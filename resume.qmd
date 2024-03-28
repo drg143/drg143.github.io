@@ -1,9 +1,9 @@
 ---
 layout: cv
-title: Isaac Newtons's CV
+title: David Ramirez's CV
 ---
-# Isaac Newton
-Physicist, Mathematician, Cambridge professor.
+# David Ramirez 
+Bachelor's of Public Administration, Data Analyst Minor
 
 <div id="webaddress">
 <a href="isaac@applesdofall.org">isaac@applesdofall.org</a>
@@ -13,16 +13,16 @@ Physicist, Mathematician, Cambridge professor.
 
 ## Currently
 
-Standing on the shoulders of giants
+Senior year at BYUI
 
 ### Specialized in
 
-Laws of motion, gravitation, minting coins, disliking [Robert Hooke](http://en.wikipedia.org/wiki/Robert_Hooke)
+Public Administration, Data Science (Python and SQL), Fluent in Spanish and French 
 
 
 ### Research interests
 
-Cooling, power series, optics, alchemy, planetary motions, apples.
+Public Administration, Political Science, Programming, Python, SQL, etc...
 
 
 ## Education
