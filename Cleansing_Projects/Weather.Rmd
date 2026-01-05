@@ -1,0 +1,204 @@
+---
+title: "Weather"
+output: 
+  html_document:
+    theme: cosmo
+    code_folding: hide
+    toc: true
+    toc_float: true 
+    toc_depth: 2 
+---
+
+## Background
+
+Everybody would agree that Rexburg is one cold place, it gets plenty of snow, the snow plowing is not done very well, and there are not enough buildings to hide from the cold! 
+
+But this poses one significant question, what could be colder than Rexburg? Well, let's ask our friends over at the Barentsburg weather station, a settlement at the northernmost island of Norway, and see how they feel about our weather compared to theirs. 
+
+This research will be done by obtaining the maximum and minimum temperatures from many days collected by both weather stations in Rexburg and in Norway, and comparing them with eachother by using a Two-Lines model. 
+
+```{r, warning=FALSE, message=FALSE, ev}
+library(GSODR)
+library(pander)
+library(broom)
+library(ggplot2)
+
+
+#run: install.packages("GSODR") 
+# to get the GSODR package. You'll need this package to pull in your weather data.
+load(system.file("extdata", "isd_history.rda", package = "GSODR"))
+```
+
+
+
+
+```{r, eval=FALSE}
+#Run this in your console to see the Country Names you can pick from:
+View(isd_history)
+
+
+#Search "United States" in the search bar of the top-right corner of the data Viewer that pops up.
+#Or search for any other country you are interested in.
+#Goal, select the STNID (station ID) for two different weather stations. 
+#For example, Rexburg is STNID == "726818-94194"
+#Once you have two STNID values selected, go to the next R-chunk.
+```
+
+```{r}
+rexburg <- get_GSOD(years = 2023, station = "726818-94194")
+
+barentsburg <- get_GSOD(years = 2023, station = "201070-99999")
+#Run: View(rexburg)
+#To see what columns mean, go here: https://cran.r-project.org/web/packages/GSODR/vignettes/GSODR.html#appendices
+
+#Then run a similar code to get your station information for your weather stations.
+#(If you want to use rexburg, then just use one of the following codes)
+#cityName1 <- get_GSOD(years = 2023, station = "yourchoice1")
+#cityName2 <- get_GSOD(years = 2023, station = "yourchoice2")
+
+#Finally, join your two datasets together into one dataset:
+weather <- rbind(rexburg, barentsburg)
+```
+
+<!-- Now write up an analysis that studies something like how well the MIN temperature predicts the MAX temperature of the day in the two cities you selected. Of course, you are welcome to do any multiple regression you want with the data, but the recommendation would be to just run a "two-lines" model with the x=MIN, y=MAX, and color of the dots the NAME column. -->
+
+## Analysis
+
+A "two-lines" regression model is carried out by using the following formula. 
+
+$$
+  \underbrace{Y_i}_{\text{MAX}} = \overbrace{\beta_0 + \beta_1 \underbrace{X_{i1}}_{\text{MIN}}}^{\text{Rexburg Line}} + \overbrace{\beta_2 \underbrace{X_{i2}}_{\text{1 if Barentsburg}} + \beta_3 \underbrace{X_{i1} X_{i2}}_{\text{MIN:1}}}^{\text{Barentsburg Adjustments to Line}} + \epsilon_i
+$$
+```{r}
+
+lm.2lines <- lm(MAX ~ MIN + NAME + MIN:NAME, data=weather)
+
+pander(summary(lm.2lines)$coefficients)
+
+
+```
+
+The estimates shown above approximate the 𝛽’s in the regression model: 𝛽0 is estimated by the (Intercept), 𝛽1 is estimated by the MIN value of 0.9083, 𝛽2 is estimated by the NAME value of 11.44, and 𝛽3 is estimated by the MIN:NAME value of 0.2789.
+
+$$
+\left.\begin{array}{ll}
+H_0: \beta_1 = 0 \\  
+H_a: \beta_1 \neq 0 \\
+\alpha : 0.05
+\end{array}\right.
+
+$$
+
+## Checking for Requirements 
+
+For safety reasons, we check the assumptions of linear regression: linearity, normality of residuals, and homoscedasticity.
+
+```{r}
+
+
+weather_aug <- augment(lm.2lines)
+
+
+
+ggplot(weather_aug, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Residuals vs Fitted Values", x = "Fitted Values", y = "Residuals")
+
+
+ggplot(weather_aug, aes(x = .resid)) +
+  geom_histogram(fill = "steelblue", bins = 30) +
+  labs(title = "Histogram of Residuals", x = "Residuals")
+
+
+ggplot(weather_aug, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Q-Q Plot of Residuals")
+
+
+```
+
+
+
+
+We will now use these estimates to create the following graph using the equations for the two lines. 
+
+
+```{r}
+
+plot(MAX ~ MIN, data = weather, 
+     col = c("orange", "skyblue")[as.factor(NAME)], 
+     pch = 21, 
+     main = "The Maximum Temperature is affected by the Minimum Temperature", 
+     cex.main = 1,
+     xlab = "Minimum Temperature (°F)",      # Updated x-axis label
+     ylab = "Maximum Wind Speed (knots)")    # Updated y-axis label
+
+legend("topleft", legend = c("Barentsburg (NAME==1)", "Rexburg (NAME==0)"), 
+       bty = "n", lty = 1, col = c("skyblue", "orange"), cex = 0.8)
+
+b <- coef(lm.2lines)
+
+curve(3.409 + 0.9083*x, col = "orange", lwd = 2, add = TRUE)
+
+curve((3.409 + 11.44) + (0.9083 + 0.2789)*x, col = "skyblue", lwd = 2, add = TRUE)
+
+
+```
+
+## Comparing the Models
+
+```{r}
+
+
+lm1 <- lm(MAX ~ MIN + NAME, data = weather)
+
+lm2 <- lm(MAX ~ MIN + MIN:NAME, data = weather)
+
+lm3 <- lm(MAX ~ MIN * NAME, data = weather)
+
+
+anova(lm1, lm2, lm3)
+
+
+```
+
+We compare the three models: 
+
+- lm(MAX  MIN + NAME) for the Equal Slopes 
+
+- lm(MAX ~ MIN + MIN:NAME) for the Equal intercepts 
+
+- lm(MAX ~ MIN * NAME) for the Interaction model 
+
+From the lm.2lines we obtain: 
+
+Intercept (β₀): 3.409
+
+Slope for MIN (β₁): 0.9083
+
+Intercept adjustment for Barentsburg (β₂): 11.44
+
+Slope adjustment for Barentsburg (β₃): 0.2789
+
+
+So, the fitted regression lines for Rexburg is:
+
+$$
+\text{MAX} = 3.409 + 0.9083 \times \text{MIN}
+$$
+
+And for Barentsburg:
+
+$$
+\text{MAX} = (3.409 + 11.44) + (0.9083 + 0.2789) \times \text{MIN} = 14.849 + 1.1872 \times \text{MIN}
+$$
+
+The ANOVA comparison between the three models reveals that the full interaction model (Model 3), which allows both the slope and intercept to differ between Rexburg and Barentsburg, provides a significantly better fit to the data than the simpler models. Specifically, Model 3 outperforms Model 1, which assumes a common slope but different intercepts, with a very large F-statistic (F = 1416.2) and an extremely small p-value (p < 2.2e-16). This p-value is far below the standard significance level of 0.05, indicating that the improvement in model fit is not due to random chance. In simple terms, this means that the relationship between minimum and maximum temperatures differs meaningfully between the two cities. Both the starting temperature levels (intercepts) and the rate at which maximum temperature increases with minimum temperature (slopes) are significantly different. Therefore, the interaction model is the most appropriate choice for analyzing how minimum temperature predicts maximum temperature in Rexburg and Barentsburg.
+
+## Conclusion 
+
+This two-lines regression analysis shows that minimum temperature strongly predicts maximum temperature in both Rexburg and Barentsburg. However, Barentsburg consistently shows higher maximum temperatures for the same minimums, suggesting a broader temperature range or delayed cooling/warming patterns.Diagnostic plots confirm linear regression assumptions are met.
+
+In the future one might consider adding season as a factor to understand temporal effects. Also, investigating other variables like wind, humidity, or dew point as predictors might be beneficial. Lastly, exploring nonlinear models if residual patterns suggest curvature might also be of interest. 
