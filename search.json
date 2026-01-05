@@ -37,16 +37,9 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "about me",
+    "title": "\nDavid Ramirez\n",
     "section": "",
-    "text": "MarkDown Basics"
-  },
-  {
-    "objectID": "index.html#title-2-header",
-    "href": "index.html#title-2-header",
-    "title": "about me",
-    "section": "",
-    "text": "MarkDown Basics"
+    "text": "&lt;!DOCTYPE html&gt;\n\n\n\nDavid Ramirez | Data Analyst\n\n\n\n\nDavid Ramirez\n\n\nEntry-Level Data Analyst | R | Python | SQL\n\n\nProjects\n\n\n\n Climate Regression Analysis (R) \n\n\n Exploratory Data Analysis Project \n\n\n\nContact\n\n\nEmail | LinkedIn | GitHub\n\n\n\n\n\n\n Back to top"
   },
   {
     "objectID": "exploration.html",
